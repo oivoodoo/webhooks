@@ -75,6 +75,4 @@ func TestCreateWebooksAndSync(t *testing.T) {
 	assert.Len(t, repo.Data, 3)
 
 	pkg.App.Die()
-
-	time.Sleep(time.Second)
 }

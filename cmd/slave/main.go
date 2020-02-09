@@ -9,7 +9,7 @@ import (
 
 func main() {
 	app := start()
-	<-app.Die
+	<-app.Done
 }
 
 func start() *pkg.AppStr {

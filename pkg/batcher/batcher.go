@@ -12,16 +12,18 @@ import (
 )
 
 type Batcher struct {
-	collector []*webhooks.Webhook
-	locker    *sync.Mutex
-	die       chan bool
+	collector    []*webhooks.Webhook
+	locker       *sync.Mutex
+	die          chan bool
+	ChecksumChan chan string
 }
 
 func New() *Batcher {
 	batcher := &Batcher{
-		locker:    &sync.Mutex{},
-		collector: []*webhooks.Webhook{},
-		die:       pkg.App.SubscribeDie(),
+		locker:       &sync.Mutex{},
+		collector:    []*webhooks.Webhook{},
+		die:          pkg.App.SubscribeDie(),
+		ChecksumChan: make(chan string),
 	}
 	batcher.start()
 	return batcher
@@ -30,7 +32,6 @@ func New() *Batcher {
 func (b *Batcher) sync() error {
 	b.locker.Lock()
 	{
-		println("[batcher] begin inserting to database", len(b.collector))
 		repo := pkg.App.DB.(*db.DB).WebhookRepo
 
 		err := repo.BatchInsert(b.collector)
@@ -38,7 +39,6 @@ func (b *Batcher) sync() error {
 			return tracerr.Wrap(err)
 		}
 		b.collector = []*webhooks.Webhook{}
-		println("[batcher] done inserting to database collector: ", len(b.collector), " repo:", len(repo.(*webhooks.MockWebhookRepo).Data))
 	}
 	b.locker.Unlock()
 
@@ -50,6 +50,10 @@ func (b *Batcher) Push(webhook *webhooks.Webhook) error {
 	{
 		if b.unique(webhook) {
 			b.collector = append(b.collector, webhook)
+			select {
+			case b.ChecksumChan <- webhook.Checksum:
+			default:
+			}
 		}
 	}
 	b.locker.Unlock()
@@ -80,12 +84,12 @@ func (b *Batcher) start() {
 		for {
 			select {
 			case <-b.die:
-				println("[batcher] begin die because of app exit and do sync() before to exit")
+				println("DIE")
 				if err := b.sync(); err != nil {
 					println(err.Error())
 				}
-				println("[batcher] done die because of app exit and do sync() before to exit")
-				break
+				close(b.ChecksumChan)
+				return
 			case <-time.After(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW) * time.Second):
 				if err := b.sync(); err != nil {
 					// TODO: add errors channel to output it
