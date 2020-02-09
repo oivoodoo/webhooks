@@ -66,6 +66,9 @@ func TestCreateWebooksAndSync(t *testing.T) {
 	assert.Len(t, repo.Data, 0)
 	request(strings.Replace(msg, "value", "value3", -1))
 	assert.Len(t, repo.Data, 0)
+	// should skip it because of not unique
+	request(strings.Replace(msg, "value", "value3", -1))
+	assert.Len(t, repo.Data, 0)
 
 	time.Sleep(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW+1) * time.Second)
 

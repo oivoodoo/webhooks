@@ -1,7 +1,8 @@
 package webhooks
 
 type Webhook struct {
-	Body []byte
+	Body     []byte
+	Checksum string
 }
 
 func New(body []byte) *Webhook {

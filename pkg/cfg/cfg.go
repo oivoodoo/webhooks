@@ -20,8 +20,7 @@ type Configuration struct {
 
 	BEGIN_TIME_SECONDS_WINDOW    int `default:"240"` // 4 minutes
 	END_TIME_SECONDS_WINDOW      int `default:"120"` // 2 minutes
-	EXPIRE_TIME_SECONDS_AGO      int `default:"60"`  // 1 minute
-	SYNC_DATABASE_SECONDS_WINDOW int `default:"1"`   // each 5 seconds sync with database collector using batch inserts`
+	SYNC_DATABASE_SECONDS_WINDOW int `default:"60"`  // 1 minute sync with database collector using batch inserts`
 
 	// Amazon AWS
 	AWS_REGION            string `envconfig:"AWS_REGION" default:"us-east-1"`

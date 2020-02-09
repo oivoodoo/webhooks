@@ -1,6 +1,7 @@
 package batcher
 
 import (
+	"crypto/sha256"
 	"sync"
 	"time"
 
@@ -47,11 +48,31 @@ func (b *Batcher) sync() error {
 func (b *Batcher) Push(webhook *webhooks.Webhook) error {
 	b.locker.Lock()
 	{
-		b.collector = append(b.collector, webhook)
+		if b.unique(webhook) {
+			b.collector = append(b.collector, webhook)
+		}
 	}
 	b.locker.Unlock()
 
 	return nil
+}
+
+func (b *Batcher) unique(webhook *webhooks.Webhook) bool {
+	bs := sha256.Sum256(webhook.Body)
+	webhook.Checksum = string(bs[:])
+
+	for _, w := range b.collector {
+		if w.Checksum == "" {
+			bs = sha256.Sum256(w.Body)
+			w.Checksum = string(bs[:])
+		}
+
+		if w.Checksum == webhook.Checksum {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (b *Batcher) start() {
