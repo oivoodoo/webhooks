@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - "8000:8000"
+    networks:
+      - webhooks-network
+
+  master:
+    build: .
+    environment:
+      - SLAVE_HOST=slave
+    volumes:
+      - ./:/app
+      - ~/go:/go
+      - ./../:/go/src/gitlab.com/oivoodoo/
+    command: "go run /go/src/gitlab.com/oivodoo/server/cmd/master/main.go"
+    ports:
+      - "5000:5000"
+    links:
+      - "dynamodb:dynamodb"
+    depends_on:
+      - dynamodb
+    networks:
+      - webhooks-network
+
+  slave:
+    build: .
+    volumes:
+      - ./:/app
+      - ~/go:/go
+      - ./../:/go/src/gitlab.com/oivoodoo/
+    command: "go run /go/src/gitlab.com/oivodoo/server/cmd/slave/main.go"
+    environment:
+      - MASTER_HOST=master
+    ports:
+      - "5000:5001"
+    links:
+      - "dynamodb:dynamodb"
+    depends_on:
+      - dynamodb
+    networks:
+      - webhooks-network
+
+networks:
+  webhooks-network:
+    external: true
