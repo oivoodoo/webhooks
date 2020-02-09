@@ -84,7 +84,6 @@ func (b *Batcher) start() {
 		for {
 			select {
 			case <-b.die:
-				println("DIE")
 				if err := b.sync(); err != nil {
 					println(err.Error())
 				}
