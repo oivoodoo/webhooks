@@ -13,12 +13,14 @@ import (
 type Batcher struct {
 	collector []*webhooks.Webhook
 	locker    *sync.Mutex
+	die       chan bool
 }
 
 func New() *Batcher {
 	batcher := &Batcher{
 		locker:    &sync.Mutex{},
 		collector: []*webhooks.Webhook{},
+		die:       pkg.App.SubscribeDie(),
 	}
 	batcher.start()
 	return batcher
@@ -56,7 +58,12 @@ func (b *Batcher) start() {
 	go func() {
 		for {
 			select {
-			case <-pkg.App.Die:
+			case <-b.die:
+				println("[batcher] begin die because of app exit and do sync() before to exit")
+				if err := b.sync(); err != nil {
+					println(err.Error())
+				}
+				println("[batcher] done die because of app exit and do sync() before to exit")
 				break
 			case <-time.After(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW) * time.Second):
 				if err := b.sync(); err != nil {

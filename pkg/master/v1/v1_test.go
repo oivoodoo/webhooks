@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,7 +50,7 @@ func TestCreateWebooksAndSync(t *testing.T) {
 
 	assert.Len(t, repo.Data, 0)
 
-	request := func() {
+	request := func(msg string) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", "/webhooks", bytes.NewBufferString(msg))
 		req.Header.Set("Content-Type", "application/json")
@@ -59,16 +60,18 @@ func TestCreateWebooksAndSync(t *testing.T) {
 		assert.Equal(t, router.OK_RESP, w.Body.String())
 	}
 
-	request()
+	request(strings.Replace(msg, "value", "value1", -1))
 	assert.Len(t, repo.Data, 0)
-	request()
+	request(strings.Replace(msg, "value", "value2", -1))
 	assert.Len(t, repo.Data, 0)
-	request()
+	request(strings.Replace(msg, "value", "value3", -1))
 	assert.Len(t, repo.Data, 0)
 
 	time.Sleep(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW+1) * time.Second)
 
 	assert.Len(t, repo.Data, 3)
 
-	pkg.App.Die <- true
+	pkg.App.Die()
+
+	time.Sleep(time.Second)
 }
