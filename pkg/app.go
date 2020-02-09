@@ -17,6 +17,7 @@ var App *AppStr
 
 func New() *AppStr {
 	return &AppStr{
-		Die: make(chan bool),
+		Config: cfg.Create(),
+		Die:    make(chan bool),
 	}
 }

@@ -36,7 +36,7 @@ func Create(handler ServerHandler) *Router {
 
 	v1 := e.Group("/v1")
 	{
-		v1.POST("/webhooks", createWebhook(handler))
+		v1.POST("/webhooks", CreateWebhook(handler))
 	}
 
 	// Start server
@@ -51,9 +51,11 @@ func Create(handler ServerHandler) *Router {
 	}
 }
 
-func createWebhook(handler ServerHandler) func(e echo.Context) error {
-	return func(e echo.Context) error {
-		req := e.Request()
+const OK_RESP = "RECEIVED"
+
+func CreateWebhook(handler ServerHandler) func(e echo.Context) error {
+	return func(ctx echo.Context) error {
+		req := ctx.Request()
 
 		if b, err := ioutil.ReadAll(req.Body); err != nil {
 			return tracerr.Wrap(err)
@@ -65,6 +67,6 @@ func createWebhook(handler ServerHandler) func(e echo.Context) error {
 			}
 		}
 
-		return nil
+		return ctx.String(200, OK_RESP)
 	}
 }

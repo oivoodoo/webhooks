@@ -18,9 +18,10 @@ type Configuration struct {
 	MASTER_HOST string `default:"127.0.0.1"`
 	SLAVE_HOST  string `default:"127.0.0.1"`
 
-	BEGIN_TIME_SECONDS_WINDOW int `default:"240"` // 4 minutes
-	END_TIME_SECONDS_WINDOW   int `default:"120"` // 2 minutes
-	EXPIRE_TIME_SECONDS_AGO   int `default:"60"`  // 1 minute
+	BEGIN_TIME_SECONDS_WINDOW    int `default:"240"` // 4 minutes
+	END_TIME_SECONDS_WINDOW      int `default:"120"` // 2 minutes
+	EXPIRE_TIME_SECONDS_AGO      int `default:"60"`  // 1 minute
+	SYNC_DATABASE_SECONDS_WINDOW int `default:5`     // each 5 seconds sync with database collector using batch inserts`
 
 	// Amazon AWS
 	AWS_REGION            string `envconfig:"AWS_REGION" default:"us-east-1"`
