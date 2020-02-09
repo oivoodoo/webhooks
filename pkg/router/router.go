@@ -52,7 +52,7 @@ func Create(handler ServerHandler) *Router {
 }
 
 func createWebhook(handler ServerHandler) error {
-	return func(e *echo.Context)) {
+	return func(e *echo.Context) {
 		req := e.Request()
 
 		if b, err := ioutil.ReadAll(req.Body); err != nil {
