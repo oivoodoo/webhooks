@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
@@ -20,29 +21,54 @@ type mock_master struct {
 }
 
 func (m *mock_master) Receive(webhook *webhooks.Webhook) error {
-	return Receive(m, webhook)
+	return Receive(m.Batcher, webhook)
 }
 
 var server *echo.Echo
+var repo *webhooks.MockWebhookRepo
 
 func setup() {
-	pkg.App = pkg.New()
-	pkg.App.DB = db.Create()
+	repo = &webhooks.MockWebhookRepo{}
 
+	pkg.App = pkg.New()
+	pkg.App.DB = &db.DB{
+		WebhookRepo: repo,
+	}
+
+	master := &mock_master{
+		Batcher: batcher.New(),
+	}
 	server = echo.New()
-	server.POST("/webhooks", router.CreateWebhook(&mock_master{}))
+	server.POST("/webhooks", router.CreateWebhook(master))
 }
 
 const msg = `{"key":"value"}`
 
-func TestCreateWebhook(t *testing.T) {
+func TestCreateWebooksAndSync(t *testing.T) {
 	setup()
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/webhooks", bytes.NewBufferString(msg))
-	req.Header.Set("Content-Type", "application/json")
-	server.ServeHTTP(w, req)
+	assert.Len(t, repo.Data, 0)
 
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, router.OK_RESP, w.Body.String())
+	request := func() {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/webhooks", bytes.NewBufferString(msg))
+		req.Header.Set("Content-Type", "application/json")
+		server.ServeHTTP(w, req)
+
+		assert.Equal(t, 200, w.Code)
+		assert.Equal(t, router.OK_RESP, w.Body.String())
+	}
+
+	request()
+	assert.Len(t, repo.Data, 0)
+	request()
+	assert.Len(t, repo.Data, 0)
+	request()
+	assert.Len(t, repo.Data, 0)
+
+	time.Sleep(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW+1) * time.Second)
+
+	assert.Len(t, repo.Data, 3)
+
+	pkg.App.Die <- true
 }

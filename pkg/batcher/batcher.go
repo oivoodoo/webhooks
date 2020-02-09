@@ -12,11 +12,14 @@ import (
 
 type Batcher struct {
 	collector []*webhooks.Webhook
-	locker    sync.Mutex
+	locker    *sync.Mutex
 }
 
 func New() *Batcher {
-	batcher := &Batcher{}
+	batcher := &Batcher{
+		locker:    &sync.Mutex{},
+		collector: []*webhooks.Webhook{},
+	}
 	batcher.start()
 	return batcher
 }
@@ -24,11 +27,15 @@ func New() *Batcher {
 func (b *Batcher) sync() error {
 	b.locker.Lock()
 	{
-		err := pkg.App.DB.(*db.DB).WebhookRepo.BatchInsert(b.collector)
+		println("[batcher] begin inserting to database", len(b.collector))
+		repo := pkg.App.DB.(*db.DB).WebhookRepo
+
+		err := repo.BatchInsert(b.collector)
 		if err != nil {
 			return tracerr.Wrap(err)
 		}
 		b.collector = []*webhooks.Webhook{}
+		println("[batcher] done inserting to database collector: ", len(b.collector), " repo:", len(repo.(*webhooks.MockWebhookRepo).Data))
 	}
 	b.locker.Unlock()
 
