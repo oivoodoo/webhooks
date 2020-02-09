@@ -9,7 +9,7 @@ import (
 type Configuration struct {
 	Debug bool
 
-	PORT string `default:5000`
+	PORT string `default:"5001"`
 
 	// PostgreSQL connecting settings
 	MASTER_HOST string `default:"127.0.0.1"`
@@ -22,13 +22,20 @@ type Configuration struct {
 }
 
 func Create() *Configuration {
-	var config *Configuration
+	println("[cfg] begin loading configuration...")
 
-	err := envconfig.Process("server", config)
+	var config Configuration
 
+	err := envconfig.Process("server", &config)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return config
+	println("[cfg] PORT=", config.PORT)
+	println("[cfg] MASTER_HOST=", config.MASTER_HOST)
+	println("[cfg] SLAVE_HOST=", config.SLAVE_HOST)
+
+	println("[cfg] done loading configuration...")
+
+	return &config
 }

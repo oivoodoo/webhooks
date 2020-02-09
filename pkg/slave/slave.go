@@ -1,9 +1,13 @@
 package slave
 
+import (
+	"gitlab.com/oivoodoo/webhooks/pkg/db/webhooks"
+)
+
 type slave struct {
 }
 
-func (slave) Receive(body []byte) error {
+func (slave) Receive(webhook *webhooks.Webhook) error {
 	return nil
 }
 

@@ -21,7 +21,7 @@ import (
 //
 // the same idea used to use in rabbit mq with acknowledge pattern.
 type ServerHandler interface {
-	Receive(webhook Webhook) error
+	Receive(webhook *webhooks.Webhook) error
 }
 
 type Router struct {
@@ -51,8 +51,8 @@ func Create(handler ServerHandler) *Router {
 	}
 }
 
-func createWebhook(handler ServerHandler) error {
-	return func(e *echo.Context) {
+func createWebhook(handler ServerHandler) func(e echo.Context) error {
+	return func(e echo.Context) error {
 		req := e.Request()
 
 		if b, err := ioutil.ReadAll(req.Body); err != nil {

@@ -1,9 +1,13 @@
 package master
 
+import (
+	"gitlab.com/oivoodoo/webhooks/pkg/db/webhooks"
+)
+
 type master struct {
 }
 
-func (master) Receive(body []byte) error {
+func (master) Receive(webhook *webhooks.Webhook) error {
 	return nil
 }
 
