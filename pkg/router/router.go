@@ -53,7 +53,7 @@ func Create(handler ServerHandler) *Router {
 
 const OK_RESP = "RECEIVED"
 
-func CreateWebhook(handler ServerHandler) func(e echo.Context) error {
+func CreateWebhook(handler ServerHandler) func(echo.Context) error {
 	return func(ctx echo.Context) error {
 		req := ctx.Request()
 
