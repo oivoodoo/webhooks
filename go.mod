@@ -13,6 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
+	github.com/valyala/fastjson v1.4.5 // indirect
 	github.com/ztrue/tracerr v0.3.0
 	golang.org/x/crypto v0.0.0-20200208060501-ecb85df21340 // indirect
 	golang.org/x/mod v0.2.0 // indirect

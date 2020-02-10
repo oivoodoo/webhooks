@@ -1,21 +1,34 @@
-package master
+package slave
 
 import (
 	"gitlab.com/oivoodoo/webhooks/pkg/batcher"
 	"gitlab.com/oivoodoo/webhooks/pkg/db/webhooks"
-	v1 "gitlab.com/oivoodoo/webhooks/pkg/master/v1"
+	"gitlab.com/oivoodoo/webhooks/pkg/history"
+	v1 "gitlab.com/oivoodoo/webhooks/pkg/slave/v1"
 )
 
-type slave struct {
+type Slave struct {
 	*batcher.Batcher
+	*history.History
+
+	die chan bool
 }
 
-func (s *slave) Receive(webhook *webhooks.Webhook) error {
+func (s *Slave) Receive(webhook *webhooks.Webhook) error {
 	return v1.Receive(s.Batcher, webhook)
 }
 
-func Create() *slave {
-	return &slave{
-		Batcher: batcher.New(),
+func (s *Slave) Sync(history *history.History, checksums []string) error {
+	return v1.Sync(history, checksums)
+}
+
+func Create() *Slave {
+	b := batcher.New()
+	h := history.New(b.WebhooksChan)
+
+	return &Slave{
+		Batcher: b,
+		History: h,
+		die:     make(chan bool),
 	}
 }

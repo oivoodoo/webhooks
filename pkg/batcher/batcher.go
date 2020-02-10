@@ -15,7 +15,7 @@ type Batcher struct {
 	collector    []*webhooks.Webhook
 	locker       *sync.Mutex
 	die          chan bool
-	ChecksumChan chan string
+	WebhooksChan chan *webhooks.Webhook
 }
 
 func New() *Batcher {
@@ -23,7 +23,7 @@ func New() *Batcher {
 		locker:       &sync.Mutex{},
 		collector:    []*webhooks.Webhook{},
 		die:          pkg.App.SubscribeDie(),
-		ChecksumChan: make(chan string),
+		WebhooksChan: make(chan *webhooks.Webhook),
 	}
 	batcher.start()
 	return batcher
@@ -51,7 +51,7 @@ func (b *Batcher) Push(webhook *webhooks.Webhook) error {
 		if b.unique(webhook) {
 			b.collector = append(b.collector, webhook)
 			select {
-			case b.ChecksumChan <- webhook.Checksum:
+			case b.WebhooksChan <- webhook:
 			default:
 			}
 		}
@@ -87,7 +87,7 @@ func (b *Batcher) start() {
 				if err := b.sync(); err != nil {
 					println(err.Error())
 				}
-				close(b.ChecksumChan)
+				close(b.WebhooksChan)
 				return
 			case <-time.After(time.Duration(pkg.App.Config.SYNC_DATABASE_SECONDS_WINDOW) * time.Second):
 				if err := b.sync(); err != nil {
