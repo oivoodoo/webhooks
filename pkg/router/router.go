@@ -39,7 +39,10 @@ func Create(handler ServerHandler) *Router {
 	v1 := e.Group("/v1")
 	{
 		v1.POST("/webhooks", CreateWebhook(handler))
-		v1.POST("/sync", SyncSlave(handler))
+
+		if s, ok := handler.(*slave.Slave); ok {
+			v1.POST("/sync", SyncSlave(s))
+		}
 	}
 
 	// Start server
@@ -89,10 +92,6 @@ func SyncSlave(handler ServerHandler) func(echo.Context) error {
 			var data []reqData
 
 			if err := json.Unmarshal(b, &data); err != nil {
-				return ctx.String(400, BAD_RESP)
-			}
-
-			if err := ctx.Bind(&data); err != nil {
 				return ctx.String(400, BAD_RESP)
 			}
 
